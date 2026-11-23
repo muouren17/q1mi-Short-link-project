@@ -1,0 +1,9 @@
+Name: shortener-api
+Host: 127.0.0.1
+Port: 8888
+
+SequenceURLDB:
+  DSN: "YOUR_MYSQL_USER:YOUR_MYSQL_PASSWORD@tcp(127.0.0.1:3306)/shortener?charset=utf8mb4&parseTime=true&loc=UTC"
+
+ShortURLDB:
+  DSN: "YOUR_MYSQL_USER:YOUR_MYSQL_PASSWORD@tcp(127.0.0.1:3306)/shortener?charset=utf8mb4&parseTime=true&loc=UTC"

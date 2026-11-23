@@ -1,0 +1,12 @@
+# Local configuration and credentials
+/etc/shortener-api.yaml
+.env
+.env.*
+!.env.example
+
+# Build outputs and logs
+/shortener
+/shortener.exe
+/bin/
+*.test
+*.log
