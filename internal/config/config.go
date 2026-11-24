@@ -15,4 +15,8 @@ type Config struct {
 	ShortURLDB struct {
 		DSN string
 	}
+	Redis struct {
+		Addr     string
+		Password string
+	}
 }

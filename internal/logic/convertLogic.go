@@ -66,6 +66,13 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 	}
 
 	// 从数据库中取号码
+
+	seq, err := l.svcCtx.Sequence.Next()
+	if err != nil {
+		logx.Errorw("Sequence.Next() failed", logx.LogField{Key: "err", Value: err.Error()})
+		return nil, err
+	}
+	fmt.Println("--------------", seq, "-----------")
 	// 号码转短链
 	// 存储长，短链接的映射
 	// 返回短链接

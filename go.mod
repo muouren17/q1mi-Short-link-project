@@ -4,6 +4,7 @@ go 1.26
 
 require (
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/zeromicro/go-zero v1.11.0
 )
@@ -31,12 +32,14 @@ require (
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
 	github.com/prometheus/client_golang v1.24.1 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.70.1 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
+	github.com/redis/go-redis/v9 v9.22.0 // indirect
 	github.com/smarty/assertions v1.15.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/titanous/json5 v1.0.0 // indirect
@@ -51,6 +54,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.46.0 // indirect
 	go.opentelemetry.io/otel/trace v1.46.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.11.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
