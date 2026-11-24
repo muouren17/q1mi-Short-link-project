@@ -1,6 +1,6 @@
 # Shortener
 
-Shortener 是一个基于 Go 和 go-zero 的短链接服务。服务目前已接入链接校验、MySQL 映射查询和 Redis 取号。
+Shortener 是一个基于 Go 和 go-zero 的短链接服务。目前已实现短链创建，短链查询仍在开发中。
 
 ## HTTP 接口
 
@@ -8,10 +8,10 @@ Shortener 是一个基于 Go 和 go-zero 的短链接服务。服务目前已接
 
 | 接口 | 输入 | 当前行为 |
 | --- | --- | --- |
-| `POST /convert` | JSON 字段 `longURL` | 校验链接并分配序号。 |
-| `GET /:shortURL` | 路径参数 `shortURL` | 路由已注册，短链查询待实现。 |
+| `POST /convert` | JSON 字段 `longURL` | 校验长链接，生成并保存短码，返回 `shortURL`。 |
+| `GET /:shortURL` | 短码 | 路由已注册，按短码查询原链接待实现。 |
 
-`POST /convert` 先检查原链接能否返回 HTTP `200`，再查询 MySQL，按长链接的 MD5 判断是否已转换，并用 URL 路径的最后一段匹配已有短码。检查通过后调用 `Sequence.Next()`。短码生成、映射写入和短链接返回待实现。[转换逻辑](internal/logic/convertLogic.go)
+创建时，服务先检查长链接能否返回 HTTP `200`，再用长链接的 MD5 查询是否已有映射。通过检查后，服务从 Redis 取号，用 Base62 编码成短码，将映射写入 MySQL，并返回由 `ShortDomain` 和短码组成的地址。黑名单配置字段已加入，过滤尚待接入服务上下文。[转换逻辑](internal/logic/convertLogic.go) · [服务上下文](internal/svc/serviceContext.go)
 
 ## 序号分配
 
@@ -40,13 +40,19 @@ if [ ! -e etc/shortener-api.yaml ]; then
 fi
 ```
 
-将 `ShortURLDB.DSN` 指向已导入映射表的数据库，并填写 `SequenceURLDB.DSN`。本地开发时两项可以使用同一个 DSN。在配置文件顶层加入以下 Redis 配置，按实际部署填写地址和密码。[配置字段](internal/config/config.go)
+将 `ShortURLDB.DSN` 指向已导入映射表的数据库，并填写 `SequenceURLDB.DSN`。本地开发时两项可以使用同一个 DSN。在配置文件顶层加入以下字段，并按实际环境填写 Redis 地址和密码。[配置定义](internal/config/config.go)
 
 ```yaml
 Redis:
   Addr: "127.0.0.1:6379"
   Password: ""
+
+Base62Str: "qJm5WH9zfQ2aCvRkZOo0Vjx8Lp3PsTK7ndEB1utXcS6FhyYwM4ArNgeUIlDbiG"
+ShortBlackList: ["api", "convert"]
+ShortDomain: "http://127.0.0.1:8888"
 ```
+
+`Base62Str` 使用由 `0-9`、`a-z` 和 `A-Z` 组成的 62 个互不重复的字符。`ShortDomain` 包含协议、主机和可选端口，末尾省略 `/`，服务会在拼接时补上。
 
 如果服务运行在 WSL 2 的 NAT 模式下，而 MySQL 或 Redis 运行在 Windows 上，将相应的数据库地址换成下面命令返回的 Windows 网关 IP。
 
@@ -60,7 +66,7 @@ ip -4 route show default | awk 'NR == 1 {print $3}'
 go run . -f etc/shortener-api.yaml
 ```
 
-提交一个服务端可访问的测试链接。取号成功时，响应为 `200 OK`，正文为 JSON `null`，序号显示在服务终端。
+提交一个服务端可访问的长链接，验证创建接口。
 
 ```sh
 curl -i http://127.0.0.1:8888/convert \
@@ -68,11 +74,18 @@ curl -i http://127.0.0.1:8888/convert \
   --data '{"longURL":"https://example.com/"}'
 ```
 
+使用上面的字符表且 Redis 首次取号时，成功响应为 `200 OK`，正文如下。短码随当前序号变化。
+
+```json
+{"shortURL":"http://127.0.0.1:8888/J"}
+```
+
 ## 开发
 
 - 接口业务逻辑位于 [`internal/logic/`](internal/logic/)。
 - 取号接口及 Redis、MySQL 实现位于 [`sequence/`](sequence/)。
 - MySQL 数据模型位于 [`model/`](model/)。
+- Base62 编解码位于 [`pkg/base62/`](pkg/base62/)。
 - URL 处理、HTTP 连通性检查和 MD5 摘要工具位于 [`pkg/`](pkg/)。
 
 安装 `goctl` 后，可用下列命令从 SQL 文件重新生成模型。

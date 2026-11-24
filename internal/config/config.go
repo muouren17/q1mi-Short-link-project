@@ -19,4 +19,7 @@ type Config struct {
 		Addr     string
 		Password string
 	}
+	Base62Str      string
+	ShortBlackList []string
+	ShortDomain    string
 }

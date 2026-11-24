@@ -11,6 +11,8 @@ import (
 
 	"shortener/internal/svc"
 	"shortener/internal/types"
+	"shortener/model"
+	"shortener/pkg/base62"
 	"shortener/pkg/connect"
 	"shortener/pkg/md5"
 	"shortener/pkg/urltool"
@@ -66,15 +68,33 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 	}
 
 	// 从数据库中取号码
+	shortURL := ""
+	for {
+		seq, err := l.svcCtx.Sequence.Next()
+		if err != nil {
+			logx.Errorw("Sequence.Next() failed", logx.LogField{Key: "err", Value: err.Error()})
+			return nil, err
+		}
+		// 号码转短链
+		shortURL = base62.Int2String(seq)
+		if _, ok := l.svcCtx.ShortBlackListMap[shortURL]; !ok {
+			break
+		}
+	}
 
-	seq, err := l.svcCtx.Sequence.Next()
-	if err != nil {
-		logx.Errorw("Sequence.Next() failed", logx.LogField{Key: "err", Value: err.Error()})
+	// 存储长，短链接的映射
+	if _, err := l.svcCtx.ShortURLModel.Insert(l.ctx, &model.ShortUrlMap{
+		Lurl: sql.NullString{String: req.LongURL, Valid: true},
+		Md5:  sql.NullString{String: md5Value, Valid: true},
+		Surl: sql.NullString{String: shortURL, Valid: true},
+	}); err != nil {
+		logx.Errorw("ShortURLModel.Insert failed", logx.LogField{Key: "err", Value: err.Error()})
 		return nil, err
 	}
-	fmt.Println("--------------", seq, "-----------")
-	// 号码转短链
-	// 存储长，短链接的映射
+
 	// 返回短链接
-	return
+	resURL := l.svcCtx.Config.ShortDomain + "/" + shortURL
+	return &types.ConvertResponse{
+		ShortURL: resURL,
+	}, nil
 }

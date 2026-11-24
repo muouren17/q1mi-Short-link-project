@@ -16,12 +16,17 @@ type ServiceContext struct {
 	SequenceURLModel model.SequenceModel
 	ShortURLModel    model.ShortUrlMapModel
 
-	Sequence sequence.Sequence
+	Sequence          sequence.Sequence
+	ShortBlackListMap map[string]struct{}
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
 	sqconn := sqlx.NewMysql(c.SequenceURLDB.DSN)
 	shconn := sqlx.NewMysql(c.ShortURLDB.DSN)
+	m := make(map[string]struct{}, len(c.ShortBlackList))
+	for _, b := range c.ShortBlackList {
+		m[b] = struct{}{}
+	}
 	return &ServiceContext{
 		Config:           c,
 		SequenceURLModel: model.NewSequenceModel(sqconn),
