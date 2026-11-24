@@ -1,6 +1,15 @@
 # Shortener
 
-基于 Go、go-zero 和 MySQL 的短链接服务，目前处于开发阶段。`POST /convert` 已实现链接可达性检查和去重查询，短码生成与保存仍待实现。`GET /:shortURL` 已注册路由，短链查询逻辑待实现。
+基于 Go、go-zero 和 MySQL 的短链接服务，目前处于开发阶段。
+
+## 接口进度
+
+接口定义见 [`shortener.api`](shortener.api)。
+
+| 接口 | 输入 | 当前进度 |
+| --- | --- | --- |
+| `POST /convert` | JSON 字段 `longURL` | 已实现链接可达性检查、按 MD5 去重和已有短链检查。短码生成与保存待实现。 |
+| `GET /:shortURL` | 路径参数 `shortURL` | 路由已注册，短链查询待实现。 |
 
 ## 本地启动
 
@@ -13,7 +22,7 @@ mysql -h "$mysql_host" -P 3306 -u "$mysql_user" -p shortener < sequence.sql
 mysql -h "$mysql_host" -P 3306 -u "$mysql_user" -p shortener < short_url_map.sql
 ```
 
-复制配置模板，并填写 `SequenceURLDB.DSN` 和 `ShortURLDB.DSN` 中的账号、密码、地址和数据库名。两项可以使用同一个数据库。`etc/shortener-api.yaml` 由 Git 忽略，真实凭据填在该文件里。
+复制[配置模板](etc/shortener-api.example.yaml)，并填写 `SequenceURLDB.DSN` 和 `ShortURLDB.DSN` 中的账号、密码、地址和数据库名。两项可以使用同一个数据库。`etc/shortener-api.yaml` 由 Git 忽略，真实凭据填在该文件里。
 
 ```sh
 if [ ! -e etc/shortener-api.yaml ]; then
@@ -37,10 +46,19 @@ go run . -f etc/shortener-api.yaml
 
 ## 开发
 
-- [`shortener.api`](shortener.api) 定义接口，`internal/logic/` 存放业务逻辑。
+- `internal/logic/` 存放业务逻辑，`pkg/` 存放 URL 处理、HTTP 连通性检查和 MD5 摘要工具。
 - `model/` 存放 MySQL 模型。安装 `goctl` 后，可用下列命令从 SQL 文件重新生成模型。
 
 ```sh
 goctl model mysql ddl --src='./*.sql' --dir=./model
+```
+
+## 测试
+
+当前测试覆盖普通字符串和空输入的 MD5 摘要、带查询参数或片段的 URL 路径提取、缺少主机名的输入，以及 HTTP 请求失败时的返回值。
+
+```sh
 go test ./...
 ```
+
+`pkg/connect` 的测试会尝试访问外部网站。若只想运行 URL 解析和 MD5 测试，可执行 `go test ./pkg/urltool ./pkg/md5`。
