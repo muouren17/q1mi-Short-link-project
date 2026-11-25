@@ -82,6 +82,12 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		}
 	}
 
+	err = l.svcCtx.Filter.AddCtx(l.ctx, []byte(shortURL))
+	if err != nil {
+		logx.Errorw("Filter.AddCtx failed", logx.LogField{Key: "err", Value: err.Error()})
+		return nil, errors.New("过滤器映射失败")
+	}
+
 	// 存储长，短链接的映射
 	if _, err := l.svcCtx.ShortURLModel.Insert(l.ctx, &model.ShortUrlMap{
 		Lurl: sql.NullString{String: req.LongURL, Valid: true},

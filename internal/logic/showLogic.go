@@ -29,6 +29,13 @@ func NewShowLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ShowLogic {
 }
 
 func (l *ShowLogic) Show(req *types.ShowRequest) (resp *types.ShowResponse, err error) {
+	ok, err := l.svcCtx.Filter.ExistsCtx(l.ctx, []byte(req.ShortURL))
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errors.New("短链不存在")
+	}
 	// 从redis中取lurl
 	lurl, err := l.svcCtx.ShortURLRedis.GetOrLoad(l.ctx, req.ShortURL, func(ctx context.Context) (string, error) {
 		row, err := l.svcCtx.ShortURLModel.FindOneBySurl(ctx, sql.NullString{String: req.ShortURL, Valid: true})

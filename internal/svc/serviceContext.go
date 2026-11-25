@@ -9,6 +9,8 @@ import (
 	"shortener/model"
 	"shortener/sequence"
 
+	"github.com/zeromicro/go-zero/core/bloom"
+	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -20,6 +22,7 @@ type ServiceContext struct {
 	Sequence          sequence.Sequence
 	ShortBlackListMap map[string]struct{}
 	ShortURLRedis     repository.CachedShortURLModel
+	Filter            *bloom.Filter
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -29,6 +32,13 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	for _, b := range c.ShortBlackList {
 		m[b] = struct{}{}
 	}
+	bloomstore := redis.MustNewRedis(redis.RedisConf{
+		Host:     c.Redis.Addr,
+		Type:     redis.NodeType,
+		Pass:     c.Redis.Password,
+		NonBlock: true,
+	})
+	filter := bloom.New(bloomstore, "shortener:bloom:v1", 2_000_000)
 	return &ServiceContext{
 		Config:           c,
 		SequenceURLModel: model.NewSequenceModel(sqconn),
@@ -36,5 +46,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		// Sequence:         sequence.NewMySQL(c.SequenceURLDB.DSN),
 		Sequence:      sequence.NewRedis(c.Redis.Addr, c.Redis.Password),
 		ShortURLRedis: *repository.NewCachedShortURLModel(c.Redis.Addr, c.Redis.Password),
+		Filter:        filter,
 	}
 }
