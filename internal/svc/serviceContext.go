@@ -5,6 +5,7 @@ package svc
 
 import (
 	"shortener/internal/config"
+	"shortener/internal/repository"
 	"shortener/model"
 	"shortener/sequence"
 
@@ -18,6 +19,7 @@ type ServiceContext struct {
 
 	Sequence          sequence.Sequence
 	ShortBlackListMap map[string]struct{}
+	ShortURLRedis     repository.CachedShortURLModel
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -32,6 +34,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		SequenceURLModel: model.NewSequenceModel(sqconn),
 		ShortURLModel:    model.NewShortUrlMapModel(shconn),
 		// Sequence:         sequence.NewMySQL(c.SequenceURLDB.DSN),
-		Sequence: sequence.NewRedis(c.Redis.Addr, c.Redis.Password),
+		Sequence:      sequence.NewRedis(c.Redis.Addr, c.Redis.Password),
+		ShortURLRedis: *repository.NewCachedShortURLModel(c.Redis.Addr, c.Redis.Password),
 	}
 }

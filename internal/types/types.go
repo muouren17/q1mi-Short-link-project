@@ -12,7 +12,7 @@ type ConvertResponse struct {
 }
 
 type ShowRequest struct {
-	ShortURL string `form:"shortURL" validate:"required"`
+	ShortURL string `path:"shortURL" validate:"required"`
 }
 
 type ShowResponse struct {
