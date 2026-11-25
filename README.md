@@ -1,6 +1,6 @@
 # Shortener
 
-Shortener 是一个基于 Go 和 go-zero 的短链接服务。目前已实现短链创建，短链查询仍在开发中。
+Shortener 是一个基于 Go 和 go-zero 的短链接服务，支持创建短链和访问短链跳转。MySQL 保存长短链映射，Redis 用于默认取号和缓存查询结果。
 
 ## HTTP 接口
 
@@ -9,9 +9,15 @@ Shortener 是一个基于 Go 和 go-zero 的短链接服务。目前已实现短
 | 接口 | 输入 | 当前行为 |
 | --- | --- | --- |
 | `POST /convert` | JSON 字段 `longURL` | 校验长链接，生成并保存短码，返回 `shortURL`。 |
-| `GET /:shortURL` | 短码 | 路由已注册，按短码查询原链接待实现。 |
+| `GET /:shortURL` | 路径中的短码 | 查询原链接，返回 `302 Found`，并在 `Location` 响应头中给出跳转地址。 |
 
 创建时，服务先检查长链接能否返回 HTTP `200`，再用长链接的 MD5 查询是否已有映射。通过检查后，服务从 Redis 取号，用 Base62 编码成短码，将映射写入 MySQL，并返回由 `ShortDomain` 和短码组成的地址。黑名单配置字段已加入，过滤尚待接入服务上下文。[转换逻辑](internal/logic/convertLogic.go) · [服务上下文](internal/svc/serviceContext.go)
+
+## 跳转与缓存
+
+访问短链时，服务先从 Redis 哈希 `lwithsURL` 按短码查找原链接。缓存未命中时，同一服务进程内并发访问同一短码的请求由 `singleflight` 合并。共享查询会再检查一次缓存，仍未命中时查询 MySQL 并回填 Redis。[跳转逻辑](internal/logic/showLogic.go) · [缓存实现](internal/repository/shorturl_cache.go)
+
+Redis 读取出错时，服务会尝试从 MySQL 查询原链接。只要查到了原链接，即使缓存回填失败，服务也会返回 `302 Found`。
 
 ## 序号分配
 
@@ -66,6 +72,8 @@ ip -4 route show default | awk 'NR == 1 {print $3}'
 go run . -f etc/shortener-api.yaml
 ```
 
+## 创建和访问短链
+
 提交一个服务端可访问的长链接，验证创建接口。
 
 ```sh
@@ -80,9 +88,16 @@ curl -i http://127.0.0.1:8888/convert \
 {"shortURL":"http://127.0.0.1:8888/J"}
 ```
 
+将命令中的地址换成实际返回的 `shortURL`。响应会包含 `302 Found` 和 `Location: https://example.com/`。浏览器打开这个地址时会自动跳转。
+
+```sh
+curl -sS -D - -o /dev/null http://127.0.0.1:8888/J
+```
+
 ## 开发
 
 - 接口业务逻辑位于 [`internal/logic/`](internal/logic/)。
+- Redis 缓存和并发查询合并位于 [`internal/repository/`](internal/repository/)。
 - 取号接口及 Redis、MySQL 实现位于 [`sequence/`](sequence/)。
 - MySQL 数据模型位于 [`model/`](model/)。
 - Base62 编解码位于 [`pkg/base62/`](pkg/base62/)。
