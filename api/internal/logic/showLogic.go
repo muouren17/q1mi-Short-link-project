@@ -8,8 +8,8 @@ import (
 	"database/sql"
 	"errors"
 
-	"shortener/internal/svc"
-	"shortener/internal/types"
+	"shortener/api/internal/svc"
+	"shortener/api/internal/types"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

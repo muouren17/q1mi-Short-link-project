@@ -6,18 +6,18 @@ package handler
 import (
 	"net/http"
 
-	"shortener/internal/logic"
-	"shortener/internal/svc"
-	"shortener/internal/types"
+	"shortener/api/internal/logic"
+	"shortener/api/internal/svc"
+	"shortener/api/internal/types"
 
 	"github.com/go-playground/validator"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
-func ShowHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+func ConvertHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.ShowRequest
+		var req types.ConvertRequest
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return
@@ -29,14 +29,12 @@ func ShowHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		l := logic.NewShowLogic(r.Context(), svcCtx)
-		resp, err := l.Show(&req)
+		l := logic.NewConvertLogic(r.Context(), svcCtx)
+		resp, err := l.Convert(&req)
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			// httpx.OkJsonCtx(r.Context(), w, resp)
-			// 改为重定向
-			http.Redirect(w, r, resp.LongURL, http.StatusFound)
+			httpx.OkJsonCtx(r.Context(), w, resp)
 		}
 	}
 }

@@ -7,9 +7,9 @@ import (
 	"flag"
 	"fmt"
 
-	"shortener/internal/config"
-	"shortener/internal/handler"
-	"shortener/internal/svc"
+	"shortener/api/internal/config"
+	"shortener/api/internal/handler"
+	"shortener/api/internal/svc"
 	"shortener/pkg/base62"
 
 	"github.com/zeromicro/go-zero/core/conf"

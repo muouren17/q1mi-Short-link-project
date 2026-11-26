@@ -6,6 +6,11 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
+func TestMain(m *testing.M) {
+	MustInit("qJ012345679ABCDEFGHIKLM8NOPQRSTUVWXYZabdcefghijklmnoprstuvwxyz")
+	m.Run()
+}
+
 func TestInt2String(t *testing.T) {
 	convey.Convey("case:0", t, func() {
 		seq := 0

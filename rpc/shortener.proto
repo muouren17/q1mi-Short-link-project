@@ -1,0 +1,25 @@
+syntax = "proto3";
+option go_package = "shortener/rpc/types";
+package shortener;
+
+
+message ConvertRequest {
+	string LongURL =1;
+}
+
+message ConvertResponse {
+	string ShortURL=1;
+}
+
+message ShowRequest {
+	string ShortURL=1;
+}
+
+message ShowResponse {
+	string LongURL=1;
+}
+
+service Shortener {
+	rpc Convert(ConvertRequest) returns (ConvertResponse);
+	rpc Show(ShowRequest)returns(ShowResponse);
+}

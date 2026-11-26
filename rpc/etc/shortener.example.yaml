@@ -1,0 +1,21 @@
+Name: shortener.rpc
+ListenOn: 127.0.0.1:8080
+
+Etcd:
+  Hosts:
+    - 127.0.0.1:2379
+  Key: shortener.rpc
+
+RRedis:
+  Addr: "127.0.0.1:6379"
+  Password: ""
+
+SequenceURLDB:
+  DSN: "YOUR_MYSQL_USER:YOUR_MYSQL_PASSWORD@tcp(127.0.0.1:3306)/shortener?charset=utf8mb4&parseTime=true&loc=UTC"
+
+ShortURLDB:
+  DSN: "YOUR_MYSQL_USER:YOUR_MYSQL_PASSWORD@tcp(127.0.0.1:3306)/shortener?charset=utf8mb4&parseTime=true&loc=UTC"
+
+Base62Str: "qJm5WH9zfQ2aCvRkZOo0Vjx8Lp3PsTK7ndEB1utXcS6FhyYwM4ArNgeUIlDbiG"
+ShortBlackList: ["api", "convert"]
+ShortDomain: "http://127.0.0.1:8888"

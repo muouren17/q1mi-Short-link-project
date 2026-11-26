@@ -1,6 +1,3 @@
-// Code scaffolded by goctl. Safe to edit.
-// goctl 1.11.0
-
 package logic
 
 import (
@@ -8,40 +5,40 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"shortener/pkg/md5"
 
-	"shortener/internal/svc"
-	"shortener/internal/types"
 	"shortener/model"
 	"shortener/pkg/base62"
 	"shortener/pkg/connect"
-	"shortener/pkg/md5"
 	"shortener/pkg/urltool"
+	"shortener/rpc/internal/svc"
+	"shortener/rpc/types/shortener/rpc/types"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type ConvertLogic struct {
-	logx.Logger
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
+	logx.Logger
 }
 
 func NewConvertLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ConvertLogic {
 	return &ConvertLogic{
-		Logger: logx.WithContext(ctx),
 		ctx:    ctx,
 		svcCtx: svcCtx,
+		Logger: logx.WithContext(ctx),
 	}
 }
 
-func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertResponse, err error) {
+func (l *ConvertLogic) Convert(in *types.ConvertRequest) (*types.ConvertResponse, error) {
 	// 处理长连接数据；数据不为空，长连接能请求通，是否已转链过，避免循环转链
-	if ok := connect.Get(req.LongURL); !ok {
+	if ok := connect.Get(in.LongURL); !ok {
 		return nil, errors.New("无效的链接")
 	}
 
-	md5Value := md5.Sum([]byte(req.LongURL))
+	md5Value := md5.Sum([]byte(in.LongURL))
 	u, err := l.svcCtx.ShortURLModel.FindOneByMd5(l.ctx, sql.NullString{String: md5Value, Valid: true})
 
 	if err != sqlx.ErrNotFound {
@@ -52,9 +49,9 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 		return nil, err
 	}
 
-	basePath, err := urltool.GetBasePath(req.LongURL)
+	basePath, err := urltool.GetBasePath(in.LongURL)
 	if err != nil {
-		logx.Errorw("url.Parse failed", logx.LogField{Key: "lurl", Value: req.LongURL}, logx.LogField{Key: "err", Value: err.Error()})
+		logx.Errorw("url.Parse failed", logx.LogField{Key: "lurl", Value: in.LongURL}, logx.LogField{Key: "err", Value: err.Error()})
 		return nil, err
 	}
 
@@ -90,7 +87,7 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 
 	// 存储长，短链接的映射
 	if _, err := l.svcCtx.ShortURLModel.Insert(l.ctx, &model.ShortUrlMap{
-		Lurl: sql.NullString{String: req.LongURL, Valid: true},
+		Lurl: sql.NullString{String: in.LongURL, Valid: true},
 		Md5:  sql.NullString{String: md5Value, Valid: true},
 		Surl: sql.NullString{String: shortURL, Valid: true},
 	}); err != nil {
@@ -100,7 +97,6 @@ func (l *ConvertLogic) Convert(req *types.ConvertRequest) (resp *types.ConvertRe
 
 	// 返回短链接
 	resURL := l.svcCtx.Config.ShortDomain + "/" + shortURL
-	return &types.ConvertResponse{
-		ShortURL: resURL,
-	}, nil
+
+	return &types.ConvertResponse{ShortURL: resURL}, nil
 }

@@ -6,7 +6,7 @@ package handler
 import (
 	"net/http"
 
-	"shortener/internal/svc"
+	"shortener/api/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
 )
